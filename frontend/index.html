@@ -1,87 +1,64 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>SmartRent AI</title>
+<meta charset="UTF-8">
+<title>SmartRent AI</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <style>
-        /* 🔥 Animated Gradient Background */
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background: linear-gradient(-45deg, #667eea, #764ba2, #6a11cb, #2575fc);
-            background-size: 400% 400%;
-            animation: gradientBG 10s ease infinite;
-        }
+<style>
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, #6a11cb, #2575fc);
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
 
-        @keyframes gradientBG {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
+.container {
+    backdrop-filter: blur(15px);
+    background: rgba(255, 255, 255, 0.1);
+    padding: 30px;
+    border-radius: 20px;
+    width: 320px;
+    color: white;
+    text-align: center;
+    box-shadow: 0 0 25px rgba(0,0,0,0.2);
+}
 
-        /* 💎 Glass Container */
-        .container {
-            backdrop-filter: blur(20px);
-            background: rgba(255, 255, 255, 0.15);
-            border-radius: 15px;
-            padding: 30px;
-            width: 340px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-            border: 1px solid rgba(255,255,255,0.2);
-            color: white;
-        }
+h2 {
+    margin-bottom: 20px;
+}
 
-        h2 {
-            text-align: center;
-            margin-bottom: 20px;
-        }
+input, select {
+    width: 100%;
+    padding: 10px;
+    margin: 8px 0;
+    border-radius: 10px;
+    border: none;
+}
 
-        input, button {
-            width: 100%;
-            margin: 8px 0;
-            padding: 10px;
-            border-radius: 8px;
-            border: none;
-            outline: none;
-        }
+button {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #00c6ff, #0072ff);
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+}
 
-        input {
-            background: rgba(255,255,255,0.2);
-            color: white;
-        }
+button:hover {
+    opacity: 0.9;
+}
 
-        input::placeholder {
-            color: #eee;
-        }
-
-        button {
-            background: #00c6ff;
-            color: white;
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-
-        button:hover {
-            background: #0072ff;
-        }
-
-        #result {
-            margin-top: 15px;
-            text-align: center;
-            font-size: 20px;
-            font-weight: bold;
-        }
-
-        label {
-            font-size: 14px;
-            opacity: 0.8;
-        }
-    </style>
+.result {
+    margin-top: 15px;
+    font-size: 18px;
+}
+</style>
 </head>
 
 <body>
@@ -89,55 +66,43 @@
 <div class="container">
     <h2>🏠 SmartRent AI</h2>
 
-    <!-- 🔥 Searchable City Input -->
-    <label>City</label>
-    <input id="city" placeholder="Type or select city..." list="cityList">
-    <datalist id="cityList"></datalist>
+    <select id="city"></select>
 
-    <label>Area</label>
-    <input id="area" placeholder="Area (sq ft)">
-
-    <label>Bedrooms</label>
-    <input id="bedrooms" placeholder="Bedrooms">
-
-    <label>Bathrooms</label>
-    <input id="bathrooms" placeholder="Bathrooms">
-
-    <label>Parking</label>
-    <input id="parking" placeholder="Parking">
+    <input type="number" id="area" placeholder="Area (sq ft)">
+    <input type="number" id="bedrooms" placeholder="Bedrooms">
+    <input type="number" id="bathrooms" placeholder="Bathrooms">
+    <input type="number" id="parking" placeholder="Parking (0/1)">
 
     <button onclick="predict()">Predict Rent</button>
 
-    <div id="result">₹ --</div>
+    <div class="result" id="result"></div>
 </div>
 
 <script>
+const API = "https://smartrent-ai-9ltz.onrender.com"; // YOUR BACKEND
 
-// =========================
-// 🔥 LOAD CITIES DYNAMICALLY
-// =========================
+// Load cities
 async function loadCities() {
     try {
-        const res = await fetch("http://127.0.0.1:8000/cities");
+        const res = await fetch(`${API}/cities`);
         const data = await res.json();
 
-        const list = document.getElementById("cityList");
-        list.innerHTML = "";
+        const citySelect = document.getElementById("city");
+        citySelect.innerHTML = "";
 
         data.cities.forEach(city => {
             const option = document.createElement("option");
             option.value = city;
-            list.appendChild(option);
+            option.textContent = city;
+            citySelect.appendChild(option);
         });
 
-    } catch (error) {
-        console.error("Error loading cities:", error);
+    } catch (err) {
+        document.getElementById("result").innerText = "❌ Backend not running";
     }
 }
 
-// =========================
-// 🔥 PREDICT FUNCTION
-// =========================
+// Predict rent
 async function predict() {
     const city = document.getElementById("city").value;
     const area = document.getElementById("area").value;
@@ -145,45 +110,33 @@ async function predict() {
     const bathrooms = document.getElementById("bathrooms").value;
     const parking = document.getElementById("parking").value;
 
-    if (!city || !area || !bedrooms || !bathrooms || !parking) {
-        document.getElementById("result").innerText = "⚠️ Fill all fields";
-        return;
-    }
-
     try {
-        const res = await fetch("http://127.0.0.1:8000/predict", {
+        const res = await fetch(`${API}/predict`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
                 city: city,
-                area: parseFloat(area),
-                bedrooms: parseInt(bedrooms),
-                bathrooms: parseInt(bathrooms),
-                parking: parseInt(parking)
+                area: Number(area),
+                bedrooms: Number(bedrooms),
+                bathrooms: Number(bathrooms),
+                parking: Number(parking)
             })
         });
 
         const data = await res.json();
 
-        if (data.predicted_rent) {
-            document.getElementById("result").innerText =
-                "₹ " + data.predicted_rent;
-        } else {
-            document.getElementById("result").innerText =
-                "❌ " + data.error;
-        }
+        document.getElementById("result").innerText =
+            "Estimated Rent: ₹ " + Math.round(data.predicted_rent);
 
     } catch (err) {
-        document.getElementById("result").innerText =
-            "❌ Backend not running";
+        document.getElementById("result").innerText = "❌ Error connecting to backend";
     }
 }
 
 // Load cities on start
 loadCities();
-
 </script>
 
 </body>
